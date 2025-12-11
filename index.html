@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Football Mobile Pro - PES Style</title>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+  <style>
+    body { margin:0; font-family: sans-serif; background:#0b1020; color:#eee; }
+    #menu { padding:12px; display:flex; gap:8px; align-items:center; }
+    button { padding:8px 12px; border-radius:8px; border:none; cursor:pointer; }
+    #game-container { width:100%; height:88vh; background:#033; }
+  </style>
+</head>
+<body>
+  <div id="menu">
+    <button id="startBtn">ابدأ المباراة</button>
+    <select id="stadiumSelect"></select>
+    <button id="settingsBtn">الإعدادات</button>
+    <button id="buildApkBtn">تعليمات إنشاء APK</button>
+  </div>
+  <div id="game-container"></div>
+
+<script>
+const stadiums = ['stadium_alger', 'stadium_paris', 'stadium_milan', 'stadium_berlin', 'stadium_london'];
+const stadiumSelect = document.getElementById('stadiumSelect');
+stadiums.forEach(s => {
+  const opt = document.createElement('option'); opt.value = s; opt.text = s.replace(/_/g,' ');
+  stadiumSelect.appendChild(opt);
+});
+
+document.getElementById('startBtn').addEventListener('click',()=> startGame(stadiumSelect.value));
+document.getElementById('buildApkBtn').addEventListener('click', ()=> alert('راجع ملف README داخل الحزمة للحصول على خطوات تحويل المشروع إلى APK (Capacitor + Android Studio).'));
+
+function startGame(stadiumKey){
+  // Simple Phaser scene that loads the selected stadium image and plays placeholder crowd sound.
+  const config = {
+    type: Phaser.AUTO,
+    parent: 'game-container',
+    width: window.innerWidth,
+    height: window.innerHeight * 0.88,
+    scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+    physics: { default: 'arcade', arcade: { gravity: { y:0 }, debug: false } },
+    scene: {
+      preload: function() {
+        this.load.image('stadium', 'assets/images/' + stadiumKey + '.png');
+        this.load.image('player', 'assets/images/player_front.png');
+        this.load.audio('crowd', 'assets/sounds/crowd_loop.wav');
+        this.load.audio('kick', 'assets/sounds/kick.wav');
+        this.load.audio('comment', 'assets/sounds/commentator_essam_shawaly_placeholder.mp3');
+      },
+      create: function() {
+        const w = this.scale.width, h = this.scale.height;
+        this.add.image(w/2, h/2, 'stadium').setDisplaySize(w, h);
+        const p = this.physics.add.image(w*0.25, h/2, 'player').setDisplaySize(80,120).setCollideWorldBounds(true);
+        const b = this.physics.add.image(w/2, h/2, null).setCircle(12).setDisplaySize(24,24);
+        this.sound.add('crowd', { loop:true }).play();
+        // play commentator placeholder when goal pressed
+        this.input.keyboard.on('keydown-G', ()=> {
+          this.sound.play('comment');
+          alert('Placeholder: تعليق (ملف صوتي داخل الحزمة). استبدله بمقاطع مسموح بها.');
+        });
+        // basic control: left/right
+        this.input.on('pointermove', (ptr)=> {
+          p.y = ptr.y;
+        });
+      },
+      update: function() {}
+    }
+  };
+  if (window.game) { window.game.destroy(true); window.game = null; }
+  window.game = new Phaser.Game(config);
+}
+</script>
+</body>
+</html>
